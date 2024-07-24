@@ -16,3 +16,8 @@ reference/
 causal-conv1d/
 work_dirs/
 __pycache__/
+*.log
+output/
+mlruns/
+test_ddp.py
+

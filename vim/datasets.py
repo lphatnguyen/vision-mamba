@@ -2,6 +2,9 @@
 # All rights reserved.
 import os
 import json
+import torch
+from glob import glob
+from PIL import Image
 
 from torchvision import datasets, transforms
 from torchvision.datasets.folder import ImageFolder, default_loader
@@ -107,3 +110,29 @@ def build_transform(is_train, args):
     t.append(transforms.ToTensor())
     t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
     return transforms.Compose(t)
+
+class EmotionDataset(torch.utils.data.Dataset):
+    def __init__(self, path, classes, is_train = False, transform = None):
+        super(EmotionDataset, self).__init__()
+        self.path = path
+        if is_train:
+            self.subset = "train"
+        else:
+            self.subset = "test"
+        self.classes = classes
+        self.transform = transform
+        self.extension = ".jpg"
+        self.fns = glob("{}/{}/*/*{}".format(self.path, self.subset, self.extension))
+
+    def __len__(self):
+        return len(self.fns)
+    
+    def __getitem__(self, idx):
+        fn = self.fns[idx]
+        head, _ = os.path.split(fn)
+        _, fn_class = os.path.split(head)
+        image = Image.open(fn)
+        label = torch.tensor(self.classes.index(fn_class))
+        if self.transform:
+            image = self.transform(image)
+        return image, label
